@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { config } from '../config.js';
+import { config, isTest } from '../config.js';
 import { pool, queryOne } from '../db/pool.js';
 import { audit } from '../lib/audit.js';
 import { createSession, currentUser, destroySession, SESSION_COOKIE, setSessionCookie } from '../lib/auth.js';
@@ -28,7 +28,7 @@ export async function createResetToken(userId: number, hours = 2) {
 }
 
 export async function authRoutes(app: FastifyInstance) {
-  app.post('/api/auth/login', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
+  app.post('/api/auth/login', { config: { rateLimit: { max: isTest ? 1000 : 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const body = parse(z.object({ email: z.string().trim().toLowerCase(), password: z.string().min(1) }), req.body);
     const user = await queryOne('SELECT * FROM users WHERE lower(email)=$1', [body.email]);
     if (user?.locked_until && new Date(user.locked_until) > new Date()) {
@@ -38,12 +38,11 @@ export async function authRoutes(app: FastifyInstance) {
     if (!user || !ok || !user.active) {
       if (user) {
         const failed = user.failed_logins + 1;
-        await pool.query(`UPDATE users SET failed_logins=$2, locked_until=CASE WHEN $2 >= $3 THEN now() + make_interval(mins => $4::int) END WHERE id=$1`, [
-          user.id,
-          failed >= MAX_FAILED ? 0 : failed,
-          MAX_FAILED,
-          LOCK_MINUTES,
-        ]);
+        const lock = failed >= MAX_FAILED;
+        await pool.query(
+          `UPDATE users SET failed_logins=$2, locked_until=CASE WHEN $3 THEN now() + make_interval(mins => $4::int) ELSE locked_until END WHERE id=$1`,
+          [user.id, lock ? 0 : failed, lock, LOCK_MINUTES],
+        );
         await audit({ userId: user.id, action: 'auth.login_failed', ip: req.ip });
       }
       throw unauthorized(user && !user.active && ok ? 'Usuário desativado. Procure o administrador.' : 'E-mail ou senha inválidos');

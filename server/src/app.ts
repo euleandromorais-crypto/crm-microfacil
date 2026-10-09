@@ -21,7 +21,6 @@ export async function buildApp(): Promise<FastifyInstance> {
     logger: isTest ? false : { level: config.LOG_LEVEL, redact: ['req.headers.cookie', 'req.headers.authorization', 'req.headers["x-api-key"]'] },
     trustProxy: config.TRUST_PROXY,
     bodyLimit: 2 * 1024 * 1024,
-    disableRequestLogging: false,
   });
 
   // guarda o corpo bruto (necessário para validar assinaturas de webhooks)
