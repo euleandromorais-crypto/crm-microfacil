@@ -368,7 +368,8 @@ function Composer({ conv, onSent, openTemplates }: { conv: any; onSent: () => vo
             ref={taRef}
             rows={1}
             value={text}
-            placeholder={note ? 'Nota interna — visível apenas para a equipe' : windowClosed ? 'Janela fechada: use um modelo aprovado' : 'Digite uma mensagem ( / para respostas rápidas, Shift+Enter quebra linha)'}
+            placeholder={note ? 'Nota interna (só a equipe vê)' : windowClosed ? 'Janela fechada: use um modelo' : 'Mensagem  •  / respostas rápidas'}
+            title="Enter envia · Shift+Enter quebra linha · / abre respostas rápidas"
             onChange={(e) => { setText(e.target.value); setHl(0); }}
             onKeyDown={onKey}
             disabled={!note && windowClosed}
@@ -547,7 +548,8 @@ function SidePanel({ conv, force, onClose }: { conv: any; force: boolean; onClos
               <span className="k">Responsável</span><span>{lead.owner_name ?? '—'}</span>
               <span className="k">Entrada</span><span>{fmtShort(lead.created_at)}</span>
             </div>
-            <Field label="Status" className="" hint={undefined}>
+            <div style={{ height: 8 }} />
+            <Field label="Status">
               <select className="select sm" value={lead.status} onChange={(e) => updateLead({ status: e.target.value })}>
                 {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>

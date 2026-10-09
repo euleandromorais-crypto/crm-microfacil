@@ -102,12 +102,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   const here = dirname(fileURLToPath(import.meta.url));
   const webDist = [resolve(here, '../../web/dist'), resolve(here, '../web/dist')].find((p) => existsSync(join(p, 'index.html')));
   if (webDist) {
-    await app.register(fastifyStatic, { root: webDist, prefix: '/', wildcard: false, maxAge: '1h', setHeaders: (res, path) => {
+    await app.register(fastifyStatic, { root: webDist, prefix: '/', wildcard: true, maxAge: '1h', setHeaders: (res, path) => {
       if (path.endsWith('index.html')) res.header('Cache-Control', 'no-cache');
       else if (path.includes('/assets/')) res.header('Cache-Control', 'public, max-age=31536000, immutable');
     } });
     app.setNotFoundHandler((req, reply) => {
-      if (req.url.startsWith('/api/') || req.url.startsWith('/webhooks/')) return reply.status(404).send({ error: 'Rota não encontrada' });
+      if (req.url.startsWith('/api/') || req.url.startsWith('/webhooks/') || req.url.startsWith('/assets/')) return reply.status(404).send({ error: 'Rota não encontrada' });
       return reply.header('Cache-Control', 'no-cache').sendFile('index.html');
     });
   }
