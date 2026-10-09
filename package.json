@@ -1,0 +1,17 @@
+{
+  "name": "crm-microfacil",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CRM comercial Micro Fácil — leads, WhatsApp, funil, agenda, catálogo, automações e relatórios",
+  "workspaces": ["server", "web"],
+  "engines": { "node": ">=20.11" },
+  "scripts": {
+    "dev": "npm run dev -w server & npm run dev -w web",
+    "build": "npm run build -w server && npm run build -w web",
+    "start": "npm run start -w server",
+    "migrate": "npm run migrate -w server",
+    "setup": "npm run setup -w server",
+    "test": "npm run test -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w web"
+  }
+}
