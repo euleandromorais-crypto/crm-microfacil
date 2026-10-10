@@ -1,6 +1,6 @@
 import { buildApp } from './app.js';
 import { config } from './config.js';
-import { ensureDefaults } from './db/defaults.js';
+import { ensureBootstrapAdmin, ensureDefaults } from './db/defaults.js';
 import { migrate } from './db/migrate.js';
 import { pool } from './db/pool.js';
 import { startRealtimeListener, stopRealtimeListener } from './lib/realtime.js';
@@ -10,6 +10,7 @@ async function main() {
   const app = await buildApp();
   await migrate((m) => app.log.info(m));
   await ensureDefaults();
+  await ensureBootstrapAdmin((m) => app.log.info(m));
   await startRealtimeListener(app.log);
   const stopWorker = config.RUN_WORKER_IN_PROCESS ? startWorkerLoop(app.log) : null;
   await app.listen({ port: config.PORT, host: config.HOST });

@@ -10,7 +10,8 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default('127.0.0.1'),
-  APP_URL: z.string().default('http://localhost:3000'),
+  // no Render, a URL pública vem em RENDER_EXTERNAL_URL
+  APP_URL: z.string().default(process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:3000'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatório'),
   DATABASE_POOL_MAX: z.coerce.number().default(15),
   // 32 bytes em base64 ou hex — usado para criptografar credenciais de integrações
@@ -35,6 +36,10 @@ const schema = z.object({
   SMTP_FROM: z.string().optional(),
   SMTP_SECURE: bool,
   TZ_APP: z.string().default('America/Sao_Paulo'),
+  // administrador inicial criado na primeira inicialização (útil em Docker/Render, sem terminal)
+  ADMIN_NAME: z.string().optional(),
+  ADMIN_EMAIL: z.string().optional(),
+  ADMIN_PASSWORD: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

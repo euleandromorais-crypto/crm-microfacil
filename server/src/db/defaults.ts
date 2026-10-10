@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+import { config } from '../config.js';
 import { pool, withTx } from './pool.js';
 import { createPipeline, DEFAULT_STAGES } from '../routes/pipelines.js';
 
@@ -73,4 +75,21 @@ export async function ensureDefaults() {
 export async function hasAdmin() {
   const r = await pool.query(`SELECT 1 FROM users WHERE role='admin' AND active LIMIT 1`);
   return !!r.rowCount;
+}
+
+/** Cria o primeiro administrador a partir de ADMIN_EMAIL/ADMIN_PASSWORD quando ainda não existe nenhum */
+export async function ensureBootstrapAdmin(log: (m: string) => void = console.log) {
+  const { ADMIN_EMAIL: email, ADMIN_PASSWORD: password, ADMIN_NAME: name } = config;
+  if (!email || !password) return;
+  if (await hasAdmin()) return;
+  if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    log('ADMIN_PASSWORD fraca (mínimo 8 caracteres, letras e números): administrador inicial NÃO criado');
+    return;
+  }
+  await pool.query(
+    `INSERT INTO users (name, email, password_hash, role, active) VALUES ($1,$2,$3,'admin',true)
+     ON CONFLICT ((lower(email))) DO UPDATE SET role='admin', active=true`,
+    [name || 'Administrador', email.trim().toLowerCase(), await bcrypt.hash(password, 12)],
+  );
+  log(`Administrador inicial criado: ${email}`);
 }

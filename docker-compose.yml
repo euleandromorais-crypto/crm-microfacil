@@ -1,0 +1,35 @@
+# Teste local: docker compose up --build   ->  http://localhost:3000
+# Login inicial: admin@teste.com / Admin1234 (altere depois em "Meu perfil")
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm
+      POSTGRES_DB: crm
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm"]
+      interval: 3s
+      retries: 20
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://crm:crm@db:5432/crm
+      APP_URL: http://localhost:3000
+      APP_ENCRYPTION_KEY: troque-esta-chave-local-0123456789abcdef0123456789
+      COOKIE_SECURE: "false"
+      ADMIN_NAME: Administrador
+      ADMIN_EMAIL: admin@teste.com
+      ADMIN_PASSWORD: Admin1234
+    volumes:
+      - storage:/data/storage
+volumes:
+  db:
+  storage:
